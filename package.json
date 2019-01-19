@@ -1,0 +1,15 @@
+{
+  "name": "mymo",
+  "version": "0.0.1",
+  "description": "A little tool to translate mysql from WeeWx into mongodb",
+  "main": "mymo.js",
+  "dependencies": {
+    "zongji": "^0.4.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Teo Gonzalez @thblckjkr",
+  "license": "MIT"
+}
