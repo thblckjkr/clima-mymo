@@ -27,9 +27,26 @@ zongji.start({
   includeEvents: ['tablemap', 'writerows', 'updaterows', 'deleterows']
 });
 
-// Stop process on SIGINT (Remember to add the another one's)
-process.on('SIGINT', function() {
-   console.log('Got SIGINT.');
-   zongji.stop();
-   process.exit();
- });
+ /** EXIT HANDLER **/
+function exitHandler(info, err) {
+   console.log(info.method, "Succesfull end"); 
+   if (info.exit){
+      zongji.stop();
+      process.exit();
+   }
+}
+
+//Do something when app is closing
+process.on('exit', exitHandler.bind(null,{ method : 'exit'}));
+
+// Catches ctrl+c event
+process.on('SIGINT', exitHandler.bind(null, { method: 'SIGINT', exit: true }));
+
+// Catches "kill pid" (for example: nodemon restart)
+process.on('SIGTERM', exitHandler.bind(null, { method: 'SIGTERM', exit: true }));
+process.on('SIGUSR1', exitHandler.bind(null, { method: 'SIGUSR1', exit: true }));
+process.on('SIGUSR2', exitHandler.bind(null, { method: 'SIGUSR2', exit: true }));
+
+// Catches uncaught exceptions
+process.on('uncaughtException', exitHandler.bind(null, { method: 'uncaughtException', exit: true }));
+/** EXIT HANDLER **/
