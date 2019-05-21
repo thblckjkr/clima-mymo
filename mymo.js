@@ -1,17 +1,28 @@
-var ZongJi = require('zongji');
-var Parser = require('./lib/parser');
+// Load libraries and dependencies
+// Utility to parse the MySQL binlog
+const ZongJi = require('zongji');
+// Client to connect to mongodb
+const MongoClient = require('mongodb').MongoClient;
+// Parser, main program
+const Parser = require('./lib/parser');
+const Saver = require('./lib/saver');
 
-const db = require('./database/config.json');
+// Load database configurations
+const config = require('./config/config.json');
+
+// Create the client instance for mongodb
+const mongo = new MongoClient( config.mongo.url );
 
 // Link and instanciate the parser for storing the data
-var parser = new Parser();
+var parser = new Parser( mongo );
 
 // MySQL credentials [Change here]
 var zongji = new ZongJi({
-   serverId : db.mysql.serverId,
-   host: db.mysql.host,
-   user: db.mysql.username,
-   password: db.mysql.password
+   serverId : config.mysql.serverId,
+   host: config.mysql.host,
+   user: config.mysql.username,
+   password: config.mysql.password,
+   includeSchema: config.schemas
 });
 
 // Each change to the replication log results in an event

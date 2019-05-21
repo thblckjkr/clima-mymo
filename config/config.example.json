@@ -1,15 +1,15 @@
 {
-    "mysql" : {
-        "serverId" : 1,
-        "host": "localhost",
-        "username": "username",
-        "password": "password",
-        "schemas": { 
-            "my_database": [
-                "allow_table",
-                "another_table"
-            ],
-            "another_db": true
-        }
-    }
+   "mysql" : {
+      "serverId" : 1,
+      "host": "localhost",
+      "username": "username",
+      "password": "password",
+      "schemas": { 
+         "my_database": [
+               "allow_table",
+               "another_table"
+         ],
+         "another_db": true
+      }
+   }
 }

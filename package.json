@@ -4,7 +4,8 @@
   "description": "A little tool to translate mysql from WeeWx into mongodb",
   "main": "mymo.js",
   "dependencies": {
-    "zongji": "^0.4.7"
+    "zongji": "^0.4.7",
+    "mongodb": "~3.1"
   },
   "devDependencies": {},
   "scripts": {
