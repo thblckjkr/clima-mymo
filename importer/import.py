@@ -11,8 +11,8 @@ class uploader:
       # Get xml from uri
       r = requests.get(config['schema']['url'], allow_redirects=False)
       xmldoc = minidom.parse(r.content)
-      xmldoc.getElementsByTagName('Estacion')
-      
+      itemlist = xmldoc.getElementsByTagName('Estacion')
+      print(itemlist)
 
 
 with open('../config/config.json') as json_file:
@@ -23,6 +23,8 @@ conn = MySQLdb.connect(
    user = config['mysql']['username'],
    passwd = config['mysql']['username']
 )
+
+u = uploader()
 
 temp = raw_input("Que base de datos desea importar?")
 
