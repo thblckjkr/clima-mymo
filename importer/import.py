@@ -15,6 +15,7 @@ with open('../config/config.json') as json_file:
 class uploader:
 
    def __init__(self, db):
+      # Get a database and load the corresponding everything from the public XML
       self.loadXML(db)
 
    def loadXML(self, db):
@@ -25,14 +26,19 @@ class uploader:
       for item in itemlist:
          estacion =  item.getElementsByTagName('nombre')[0]
          for dato in estacion.childNodes:
-            # temp = dato.data.split(" ")
-            print (dato.data)
+            temp = dato.data.split(" ")
+            temp = "".join(temp)
+            if temp == db:
                
 
-databaseName = input("¿Que base de datos desea importar?")
+#databaseName = input("¿Que base de datos desea importar?")
+databaseName = "Estacion09"
 u = uploader(databaseName)
 
+# TODO: Remove
 temp = input("Presione ctrl + c  para terminar")
+
+
 conn = pymysql.connect(
    host = config['mysql']['host'],
    user = config['mysql']['username'],
