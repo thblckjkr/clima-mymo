@@ -2,11 +2,11 @@
 # This one is dirty AF [@thblckjkr]
 
 import json
-import pymysql
+import pymysql.cursors
 import requests
 
 # xml requests
-from xml.dom import minidom
+from lxml import objectify
 
 # Import configuration
 with open('../config/config.json') as json_file:
@@ -16,21 +16,53 @@ class uploader:
 
    def __init__(self, db):
       # Get a database and load the corresponding everything from the public XML
-      self.loadXML(db)
+      self.sensores = self.loadXML(db)
+      self.db = db
+
+      self.conn = pymysql.connect(
+         host = config['mysql']['host'],
+         user = config['mysql']['username'],
+         passwd = config['mysql']['password']
+      )
 
    def loadXML(self, db):
       r = requests.get(config['schema']['url'], allow_redirects = False)
-      xmldoc = minidom.parseString(r.content)
-      itemlist = xmldoc.getElementsByTagName('Estacion')
+      main = objectify.fromstring(r.content)
 
-      for item in itemlist:
-         estacion =  item.getElementsByTagName('nombre')[0]
-         for dato in estacion.childNodes:
-            temp = dato.data.split(" ")
-            temp = "".join(temp)
-            if temp == db:
-               
+      for item in main.Estaciones.Estacion:
+         if "".join(item.get("nombre").split(" ")) == db:
+            print("Estacion encontrada, empezando a descargar")
+            return item.sensores
 
+   def loadSQL(self):
+      fields = [ 'dateTime' ]
+      for field in self.sensores.iterchildren():
+         # Si hay datos que no sean iguales, ignorar
+         if field.tag != field.sql:
+            print ("Error raro, unhandled data")
+            return
+      
+         fields.append( str( field.sql) )
+
+      sql = " ,".join(fields)
+      sql = 'select ' + sql + ' from archive order by dateTime desc'
+
+      with self.conn.cursor() as cursor:
+         cursor.execute('use ' + self.db)
+         cursor.execute(sql)
+
+         # Obtener una a una toda la informacion
+         i = 0
+         while True:
+            row = cursor.fetchone()
+            print(row)
+            if row == None:
+               break
+            i = i + 1
+            if i == 10: break
+
+         self.conn.close()
+      
 #databaseName = input("¿Que base de datos desea importar?")
 databaseName = "Estacion09"
 u = uploader(databaseName)
@@ -38,23 +70,4 @@ u = uploader(databaseName)
 # TODO: Remove
 temp = input("Presione ctrl + c  para terminar")
 
-
-conn = pymysql.connect(
-   host = config['mysql']['host'],
-   user = config['mysql']['username'],
-   passwd = config['mysql']['password']
-)
-
-cursor = conn.cursor()
-cursor.execute('use ' + database)
-cursor.execute('select * from archive')
-
-
-# Obtener una a una toda la informacion
-while True:
-   row = cursor.fetchone()
-   if row == None:
-      break
-   print(row)
-
-db.close()
+u.loadSQL()
