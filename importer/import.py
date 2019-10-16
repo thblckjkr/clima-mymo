@@ -16,7 +16,7 @@ class uploader:
 
    def __init__(self, db):
       # Get a database and load the corresponding everything from the public XML
-      self.sensores = self.loadXML(db)
+      self.loadXML(db)
       self.db = db
 
       self.conn = pymysql.connect(
@@ -26,26 +26,24 @@ class uploader:
       )
 
    def loadXML(self, db):
+      self.sensores = [ 'dateTime' ]
+      # Get XML from URL
       r = requests.get(config['schema']['url'], allow_redirects = False)
-      main = objectify.fromstring(r.content)
+      # objectify
+      objeto = objectify.fromstring(r.content)
 
-      for item in main.Estaciones.Estacion:
+      # Para cada estacion en el archivo
+      for item in objeto.Estaciones.Estacion:
          if "".join(item.get("nombre").split(" ")) == db:
-            print("Estacion encontrada, empezando a descargar")
-            return item.sensores
+            # Generate fields
+            for sensor in item.sensores.iterchildren():
+               self.sensores.append( str(sensor.sql) )
+            return True
 
    def loadSQL(self):
-      fields = [ 'dateTime' ]
-      for field in self.sensores.iterchildren():
-         # Si hay datos que no sean iguales, ignorar
-         if field.tag != field.sql:
-            print ("Error raro, unhandled data")
-            return
-      
-         fields.append( str( field.sql) )
-
-      sql = " ,".join(fields)
+      sql = " ,".join(self.fields)
       sql = 'select ' + sql + ' from archive order by dateTime desc'
+      print ('sql para estacion \n', sql)
 
       with self.conn.cursor() as cursor:
          cursor.execute('use ' + self.db)
@@ -63,8 +61,8 @@ class uploader:
 
          self.conn.close()
       
-#databaseName = input("¿Que base de datos desea importar?")
-databaseName = "Estacion09"
+# databaseName = input("¿Que base de datos desea importar? ")
+databaseName = "Estacion26"
 u = uploader(databaseName)
 
 # TODO: Remove
