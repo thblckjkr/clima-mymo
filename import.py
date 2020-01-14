@@ -27,13 +27,9 @@ class uploader:
          passwd = config['mysql']['password']
       )
 
-      host = "148.210.68.163" # pruebas
-      puerto = "27017"
-      bd = "Clima"
+      cliente = pymongo.MongoClient( config['mongo']['url'] )
 
-      cliente = pymongo.MongoClient("mongodb://{}:{}".format(host, puerto))
-
-      self.mon = cliente[bd]
+      self.mon = cliente[config['mongo']['dbName']][config['mongo']['collection']]
 
    # Load defaults from server
    def loadXML(self, db):
@@ -99,7 +95,7 @@ class uploader:
          return True
 
    def insert(self, datos):
-      var = self.mon["archive"].insert_one(datos).inserted_id
+      var = self.mon.insert_one(datos).inserted_id
       return var
       
 databaseName = input("¿Que base de datos desea importar? ")
