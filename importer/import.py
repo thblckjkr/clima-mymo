@@ -3,6 +3,7 @@
 
 import json
 import pymysql.cursors
+import pymongo
 import requests
 
 # xml requests
@@ -26,6 +27,13 @@ class uploader:
          passwd = config['mysql']['password']
       )
 
+      host = "148.210.68.163" # pruebas
+      puerto = "27017"
+      bd = "Clima"
+      cliente = pymongo.MongoClient("mongodb://{}:{}".format(host, puerto))
+
+      self.mon = cliente[bd]
+
    # Load defaults from server
    def loadXML(self, db):
       self.sensores = [ 'dateTime' ]
@@ -39,13 +47,18 @@ class uploader:
          if "".join(item.get("nombre").split(" ")) == db:
             # Generate fields
             self.name = item.get("nombre")
+            self.datos = {
+               "units": item.find("sistemamt").text,
+               "interval": item.find("intervalo").text,
+               "state": 0
+            }
 
             for sensor in item.sensores.iterchildren():
                self.sensores.append( str(sensor.sql) )
             return True
 
    def loadSQL(self):
-      dataset = []
+      # dataset = []
       sql = " ,".join(self.sensores)
       sql = 'SELECT ' + sql + ' FROM archive order by dateTime DESC'
       print ('sql para estacion \n', sql)
@@ -61,27 +74,41 @@ class uploader:
             temp = {
                "station" : self.name,
                "dateTime": row[0],
-               "sensor": []
+               "data": {
+                  "units": self.datos['units'],
+                  "interval": self.datos['interval'],
+                  "state": self.datos['state'],
+                  "sensor" : {}
+               }
             }
             for j in range (len(self.sensores)):
-               temp["sensor"].append( { self.sensores[j] : { "value": row[j] } } )
+               if self.sensores[j] == "dateTime":
+                  continue
 
-            dataset.append(temp)
+               temp["data"]["sensor"][self.sensores[j]] = { "value": row[j] }
+
+            # dataset.append(temp)
+            self.insert(temp)
 
             if row == None:
                break
             i = i + 1
-            if i == 10: break
-
+            if i == 2: break
+            
          self.conn.close()
-         return dataset
+         return True
+
+   def insert(self, datos):
+      bd = self.mon.connect()
+      var = bd["Archive"].insert_one(datos).inserted_id
+      bd.close()
+      return var
       
 # databaseName = input("¿Que base de datos desea importar? ")
 databaseName = "Estacion26"
 u = uploader(databaseName)
 
 # TODO: Remove
-temp = input("Presione ctrl + c  para terminar")
+# temp = input("Presione ctrl + c  para terminar")
 
 data = u.loadSQL()
-print(data)
