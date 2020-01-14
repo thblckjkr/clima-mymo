@@ -30,6 +30,7 @@ class uploader:
       host = "148.210.68.163" # pruebas
       puerto = "27017"
       bd = "Clima"
+
       cliente = pymongo.MongoClient("mongodb://{}:{}".format(host, puerto))
 
       self.mon = cliente[bd]
@@ -48,8 +49,8 @@ class uploader:
             # Generate fields
             self.name = item.get("nombre")
             self.datos = {
-               "units": item.find("sistemamt").text,
-               "interval": item.find("intervalo").text,
+               "units": int(item.find("sistemamt").text),
+               "interval": int(item.find("intervalo").text),
                "state": 0
             }
 
@@ -58,7 +59,6 @@ class uploader:
             return True
 
    def loadSQL(self):
-      # dataset = []
       sql = " ,".join(self.sensores)
       sql = 'SELECT ' + sql + ' FROM archive order by dateTime DESC'
       print ('sql para estacion \n', sql)
@@ -87,28 +87,26 @@ class uploader:
 
                temp["data"]["sensor"][self.sensores[j]] = { "value": row[j] }
 
-            # dataset.append(temp)
-            self.insert(temp)
-
             if row == None:
                break
             i = i + 1
-            if i == 2: break
+            if i == 100: break
+
+            self.insert(temp)
+            print("Inseted", i)
             
          self.conn.close()
          return True
 
    def insert(self, datos):
-      bd = self.mon.connect()
-      var = bd["Archive"].insert_one(datos).inserted_id
-      bd.close()
+      var = self.mon["archive"].insert_one(datos).inserted_id
       return var
       
-# databaseName = input("¿Que base de datos desea importar? ")
-databaseName = "Estacion26"
+databaseName = input("¿Que base de datos desea importar? ")
+# databaseName = "Estacion26"
 u = uploader(databaseName)
 
 # TODO: Remove
-# temp = input("Presione ctrl + c  para terminar")
+temp = input("Presione ctrl + c  para terminar")
 
 data = u.loadSQL()
