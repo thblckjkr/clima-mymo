@@ -6,17 +6,24 @@ import pymysql.cursors
 import pymongo
 import requests
 
+from utils import UI
+
 # xml requests
 from lxml import objectify
 
 # Import configuration
-with open('../config/config.json') as json_file:
+with open('config/config.json') as json_file:
    config = json.load(json_file)
+
+# Init GUI
+u = UI()
 
 class uploader:
 
    def __init__(self, db):
       # Get a database and load the corresponding everything from the public XML
+      u.show("Connecting to the database", "info")
+
       self.name = ""
       self.loadXML(db)
       self.db = db
@@ -31,8 +38,11 @@ class uploader:
 
       self.mon = cliente[config['mongo']['dbName']][config['mongo']['collection']]
 
+      u.show("Successfully connected to the database", "success")
+
    # Load defaults from server
    def loadXML(self, db):
+      u.show("Loading XML Schema", "info")
       self.sensores = [ 'dateTime' ]
       # Get XML from URL
       r = requests.get(config['schema']['url'], allow_redirects = False)
@@ -56,12 +66,15 @@ class uploader:
 
    def loadSQL(self):
       sql = " ,".join(self.sensores)
-      sql = 'SELECT ' + sql + ' FROM archive order by dateTime DESC'
-      print ('sql para estacion \n', sql)
+      sql = 'SELECT ' + sql + ' FROM archive ORDER BY dateTime DESC'
 
       with self.conn.cursor() as cursor:
+         u.show("Executing query", "info")
+
          cursor.execute('use ' + self.db)
          cursor.execute(sql)
+
+         u.show("Query executed, starting parsing and upload", "success")
 
          # Obtener una a una toda la informacion
          i = 0
@@ -89,7 +102,7 @@ class uploader:
             if i == 100: break
 
             self.insert(temp)
-            print("Inseted", i)
+            print(str(i) + ",")
             
          self.conn.close()
          return True
@@ -98,11 +111,10 @@ class uploader:
       var = self.mon.insert_one(datos).inserted_id
       return var
       
-databaseName = input("¿Que base de datos desea importar? ")
+databaseName = u.ask("¿Que base de datos desea importar?")
 # databaseName = "Estacion26"
-u = uploader(databaseName)
+upl = uploader(databaseName)
 
-# TODO: Remove
-temp = input("Presione ctrl + c  para terminar")
+temp = input("Presione Ctrl+C  para abortar")
 
-data = u.loadSQL()
+data = upl.loadSQL()
