@@ -118,6 +118,8 @@ class uploader:
       return var
       
 def main(argv):
+   u.ask("Utilizando colección %s. Presione Ctrl+C para abortar" % config['mongo']['collection'], "warning")
+
    if len(argv) <= 1:
       databaseName = u.ask("¿Que base de datos desea importar?")
       upl = uploader(databaseName)
@@ -128,7 +130,8 @@ def main(argv):
       for x in argv[1:]:
          u.show("Cargando base de datos [%s]" % x, "warning")
          upl = uploader(x)
-         data = upl.loadSQL()
+         try:
+            data = upl.loadSQL()
 
 if __name__ == "__main__":
     main(sys.argv)
