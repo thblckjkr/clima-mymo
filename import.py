@@ -118,7 +118,7 @@ class uploader:
       return var
       
 def main(argv):
-   if len(argv) < 1:
+   if len(argv) <= 1:
       databaseName = u.ask("¿Que base de datos desea importar?")
       upl = uploader(databaseName)
       temp = input("Presione Ctrl+C para abortar o enter para continuar")
