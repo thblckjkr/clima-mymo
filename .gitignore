@@ -1,6 +1,9 @@
 # Ignore database password
 config/config.json
 
+# Ignore compiled files
+*.pyc
+
 # Logs
 logs
 *.log
