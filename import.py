@@ -106,9 +106,7 @@ class uploader:
             if i % 1000 == 0:
                print( str(i), sep=",", end='')
 
-
             self.insert(temp)
-            print(str(i) + ",")
             
          self.conn.close()
          return True
