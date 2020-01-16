@@ -104,7 +104,7 @@ class uploader:
             # Count to break or print usefull info
             i = i + 1
             if i % 1000 == 0:
-               print( str(i), sep=",", end='')
+               print( str(i) + ",", end='')
 
             self.insert(temp)
             
