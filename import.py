@@ -119,7 +119,7 @@ class uploader:
       
 def main(argv):
    
-   u.ask("Utilizando colección " + config['mongo']['collection'] + ". Presione Ctrl+C para abortar", "warning")
+   u.ask("Utilizando colección %s. Presione Ctrl+C para abortar" % config['mongo']['collection'])
 
    if len(argv) <= 1:
       databaseName = u.ask("¿Que base de datos desea importar?")
