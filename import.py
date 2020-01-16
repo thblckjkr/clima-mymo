@@ -132,6 +132,8 @@ def main(argv):
          upl = uploader(x)
          try:
             data = upl.loadSQL()
+         except:
+            print("Algun error ha ocurrido, parece ser normal")
 
 if __name__ == "__main__":
     main(sys.argv)
