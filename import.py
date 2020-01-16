@@ -1,6 +1,9 @@
 # Simple information importer
 # This one is dirty AF [@thblckjkr]
 
+# Parameters
+import sys
+
 import json
 import pymysql.cursors
 import pymongo
@@ -98,8 +101,11 @@ class uploader:
 
             if row == None:
                break
+            # Count to break or print usefull info
             i = i + 1
-            if i == 100: break
+            if i % 1000 == 0:
+               print( str(i), sep=",", end='')
+
 
             self.insert(temp)
             print(str(i) + ",")
@@ -111,10 +117,18 @@ class uploader:
       var = self.mon.insert_one(datos).inserted_id
       return var
       
-databaseName = u.ask("¿Que base de datos desea importar?")
-# databaseName = "Estacion26"
-upl = uploader(databaseName)
+def main(argv):
+   if len(argv) < 1:
+      databaseName = u.ask("¿Que base de datos desea importar?")
+      upl = uploader(databaseName)
+      temp = input("Presione Ctrl+C para abortar o enter para continuar")
+      data = upl.loadSQL()
 
-temp = input("Presione Ctrl+C  para abortar")
+   else:
+      for x in argv[1:]:
+         u.show("Cargando base de datos [%s]" % x, "warning")
+         upl = uploader(x)
+         data = upl.loadSQL()
 
-data = upl.loadSQL()
+if __name__ == "__main__":
+    main(sys.argv)
