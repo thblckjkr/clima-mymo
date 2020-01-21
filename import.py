@@ -60,7 +60,11 @@ class uploader:
             self.datos = {
                "units": int(item.find("sistemamt").text),
                "interval": int(item.find("intervalo").text),
-               "state": 0
+               "state": 0,
+               "location": {
+                  "type" : "Point",
+                  "coordinates": [ float(item.geolocalizacion.find("longitud").text), float(item.geolocalizacion.find("latitud").text) ]
+               }
             }
 
             for sensor in item.sensores.iterchildren():
@@ -90,6 +94,7 @@ class uploader:
                   "units": self.datos['units'],
                   "interval": self.datos['interval'],
                   "state": self.datos['state'],
+                  "location": self.datos['location'],
                   "sensor" : {}
                }
             }
