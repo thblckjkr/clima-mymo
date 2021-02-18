@@ -10,8 +10,9 @@
    },
 
    "mongo": {
+      "bulksize": 1000,
       "dbName": "clima",
       "collection": "archive",
-      "url": "mongo://127.0.0.1"
+      "url": "mongodb://127.0.0.1"
    }
 }

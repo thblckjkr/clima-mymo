@@ -74,6 +74,7 @@ class uploader:
       return False
 
    def loadSQL(self, fromDate):
+      data = []
       # Append datetime conditional if required
       currentDate = ''
       conditional = ''
@@ -92,8 +93,18 @@ class uploader:
          u.show("Query executed, starting parsing and upload", "success")
 
          # Parsear los datos obtenidos y almacenarlos
+         i = 1
          while True:
             row = cursor.fetchone()
+
+            if i % config['mongo']['bulksize'] == 0 or row == None:
+               self.insert(data)
+               data = []
+            
+            # If EOF break
+            if row == None:
+               break
+
             if currentDate == '':
                currentDate = row[0]
 
@@ -114,18 +125,15 @@ class uploader:
 
                temp["data"]["sensor"][self.sensores[j]] = { "value": row[j] }
 
-            # If EOF break
-            if row == None:
-               break
+            data.append(temp)
+            i = i + 1
 
-            self.insert(temp)
-            
          self.conn.close()
          return currentDate
 
    def insert(self, datos):
-      var = self.mon.insert_one(datos).inserted_id
-      return var
+      self.mon.insert_many(datos, ordered = False)
+      return True
       
 def main(argv):
    
@@ -155,10 +163,10 @@ def main(argv):
          # try:
          updatedDate = upl.loadSQL(time)
 
-         with open(logfile,'rw') as logfile:
-            logfile.write(updatedDate)
+         with open(logfile,'w') as logfile:
+            logfile.write(str(updatedDate))
          # except:
-            # u.show("Algun error ha ocurrido, parece ser normal", "error")
+         #    u.show("Algun error ha ocurrido, parece ser normal", "error")
 
 if __name__ == "__main__":
    main(sys.argv)
