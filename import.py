@@ -97,7 +97,7 @@ class uploader:
          while True:
             row = cursor.fetchone()
 
-            if i % config['mongo']['bulksize'] == 0 or row == None:
+            if i % config['mongo']['bulksize'] == 0 or row == None and i != 1:
                self.insert(data)
                data = []
             
@@ -157,16 +157,15 @@ def main(argv):
             with open(logfile, 'r') as log:
                lines = log.read().splitlines()
                time = lines[-1].strip()
-               print("time" + time)
-               exit
 
-         # try:
-         updatedDate = upl.loadSQL(time)
+         try:
+            updatedDate = upl.loadSQL(time)
 
-         with open(logfile,'w') as logfile:
-            logfile.write(str(updatedDate))
-         # except:
-         #    u.show("Algun error ha ocurrido, parece ser normal", "error")
+            if updatedDate != '':
+               with open(logfile,'w') as logfile:
+                  logfile.write(str(updatedDate))
+         except:
+            u.show("Algun error ha ocurrido, parece ser normal", "error")
 
 if __name__ == "__main__":
    main(sys.argv)

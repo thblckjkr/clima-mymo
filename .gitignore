@@ -1,6 +1,9 @@
 # Ignore database password
 config/config.json
 
+^logs/.gitkeep
+logs/*
+
 # Ignore compiled files
 *.pyc
 
