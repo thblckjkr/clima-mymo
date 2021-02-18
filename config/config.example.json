@@ -1,15 +1,17 @@
 {
-   "mysql" : {
-      "serverId" : 1,
-      "host": "localhost",
-      "username": "username",
-      "password": "password",
-      "schemas": { 
-         "my_database": [
-               "allow_table",
-               "another_table"
-         ],
-         "another_db": true
-      }
+   "schema": {
+      "url": "http://cecatev.uacj.mx/Estaciones.xml"
+   },
+
+   "mysql": {
+      "host": "127.0.0.1",
+      "username": "root",
+      "password": "password"
+   },
+
+   "mongo": {
+      "dbName": "clima",
+      "collection": "archive",
+      "url": "mongo://127.0.0.1"
    }
 }

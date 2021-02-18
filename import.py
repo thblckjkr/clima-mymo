@@ -46,10 +46,11 @@ class uploader:
    # Load defaults from server
    def loadXML(self, db):
       u.show("Loading XML Schema", "info")
-      self.sensores = [ 'dateTime' ]
-      # Get XML from URL
+
+      self.sensores = [ 'dateTime' ] # Add default "sensor" to table
+
+      # Get and parse XML
       r = requests.get(config['schema']['url'], allow_redirects = False)
-      # objectify
       objeto = objectify.fromstring(r.content)
 
       # Para cada estacion en el archivo
@@ -71,22 +72,32 @@ class uploader:
                self.sensores.append( str(sensor.sql) )
             return True
 
-   def loadSQL(self):
+   def loadSQL(self, fromDate):
+      # Append datetime conditional if required
+      currentDate = ''
+
+      conditional = ''
+      if fromDate != "":
+         conditional = 'WHERE dateTime > ' + fromDate
+
       sql = " ,".join(self.sensores)
-      sql = 'SELECT ' + sql + ' FROM archive ORDER BY dateTime DESC'
+      sql = 'SELECT ' + sql + ' FROM archive ' + conditional + ' ORDER BY dateTime DESC'
 
       with self.conn.cursor() as cursor:
-         u.show("Executing query", "info")
+         u.show("Executing query to MySQL", "info")
 
          cursor.execute('use ' + self.db)
          cursor.execute(sql)
 
          u.show("Query executed, starting parsing and upload", "success")
 
-         # Obtener una a una toda la informacion
+         # Parsear los datos obtenidos y almacenarlos
          i = 0
          while True:
             row = cursor.fetchone()
+            if currentDate == '':
+               currentDate = row[0]
+
             temp = {
                "station" : self.name,
                "dateTime": row[0],
@@ -104,17 +115,19 @@ class uploader:
 
                temp["data"]["sensor"][self.sensores[j]] = { "value": row[j] }
 
+            # If EOF break
             if row == None:
                break
-            # Count to break or print usefull info
-            i = i + 1
-            if i % 1000 == 0:
-               print( str(i) + ",", end='')
+
+            # # Every 1000 show a message
+            # i = i + 1
+            # if i % 1000 == 0:
+            #    print( str(i) + ",", end='')
 
             self.insert(temp)
             
          self.conn.close()
-         return True
+         return currentDate
 
    def insert(self, datos):
       var = self.mon.insert_one(datos).inserted_id
@@ -122,7 +135,7 @@ class uploader:
       
 def main(argv):
    
-   u.ask("Utilizando colección %s. Presione Ctrl+C para abortar" % config['mongo']['collection'])
+   u.ask("Utilizando colección %s. Presione Ctrl+C para abortar\nEnter para continuar" % config['mongo']['collection'])
 
    if len(argv) <= 1:
       databaseName = u.ask("¿Que base de datos desea importar?")
@@ -133,11 +146,21 @@ def main(argv):
    else:
       for x in argv[1:]:
          u.show("Cargando base de datos [%s]" % x, "warning")
+
+         # Load the last execution time
+         with open('logs/' + x, 'r') as logfile:
+            lines = logfile.read().splitlines()
+            time = lines[-1].strip()
+            print("time" + time)
+            exit
+
          upl = uploader(x)
          try:
-            data = upl.loadSQL()
+            updatedDate = upl.loadSQL(time)
+            with open('logs/' + x ,'rw') as logfile:
+               logfile.write(updatedDate)
          except:
-            print("Algun error ha ocurrido, parece ser normal")
+            u.show("Algun error ha ocurrido, parece ser normal", "error")
 
 if __name__ == "__main__":
     main(sys.argv)
