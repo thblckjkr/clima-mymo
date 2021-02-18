@@ -7,7 +7,7 @@ class UI:
 		self.show("Inicializando interfaz...\n", 'info')
 		
 	def show(self, message, type = 'info'):
-		color = self.colors.get(type, "Invalid month")
+		color = self.colors.get(type, "Invalid color")
 		print (color + message + self.colors['ENDC'])
 
 	def askYesNo(self, message):

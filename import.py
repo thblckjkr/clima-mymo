@@ -1,18 +1,15 @@
 # Simple information importer
-# This one is dirty AF [@thblckjkr]
 
-# Parameters
 import sys
+from os import path
 
 import json
 import pymysql.cursors
 import pymongo
 import requests
+from lxml import objectify
 
 from utils import UI
-
-# xml requests
-from lxml import objectify
 
 # Import configuration
 with open('config/config.json') as json_file:
@@ -23,13 +20,14 @@ u = UI()
 
 class uploader:
 
-   def __init__(self, db):
+   def __init__(self, station):
       # Get a database and load the corresponding everything from the public XML
       u.show("Connecting to the database", "info")
 
       self.name = ""
-      self.loadXML(db)
-      self.db = db
+      if not self.loadXML(station):
+         u.show("Station not found", "warning")
+
 
       self.conn = pymysql.connect(
          host = config['mysql']['host'],
@@ -37,7 +35,7 @@ class uploader:
          passwd = config['mysql']['password']
       )
 
-      cliente = pymongo.MongoClient( config['mongo']['url'] )
+      cliente = pymongo.MongoClient( config['mongo']['uri'] )
 
       self.mon = cliente[config['mongo']['dbName']][config['mongo']['collection']]
 
@@ -57,6 +55,8 @@ class uploader:
       for item in objeto.Estaciones.Estacion:
          if "".join(item.get("nombre").split(" ")) == db:
             # Generate fields
+            self.database = item.find("tablasql").text
+
             self.name = item.get("nombre")
             self.datos = {
                "units": int(item.find("sistemamt").text),
@@ -71,11 +71,11 @@ class uploader:
             for sensor in item.sensores.iterchildren():
                self.sensores.append( str(sensor.sql) )
             return True
+      return False
 
    def loadSQL(self, fromDate):
       # Append datetime conditional if required
       currentDate = ''
-
       conditional = ''
       if fromDate != "":
          conditional = 'WHERE dateTime > ' + fromDate
@@ -86,13 +86,12 @@ class uploader:
       with self.conn.cursor() as cursor:
          u.show("Executing query to MySQL", "info")
 
-         cursor.execute('use ' + self.db)
+         cursor.execute('use ' + self.database)
          cursor.execute(sql)
 
          u.show("Query executed, starting parsing and upload", "success")
 
          # Parsear los datos obtenidos y almacenarlos
-         i = 0
          while True:
             row = cursor.fetchone()
             if currentDate == '':
@@ -119,11 +118,6 @@ class uploader:
             if row == None:
                break
 
-            # # Every 1000 show a message
-            # i = i + 1
-            # if i % 1000 == 0:
-            #    print( str(i) + ",", end='')
-
             self.insert(temp)
             
          self.conn.close()
@@ -135,7 +129,7 @@ class uploader:
       
 def main(argv):
    
-   u.ask("Utilizando colección %s. Presione Ctrl+C para abortar\nEnter para continuar" % config['mongo']['collection'])
+   # u.ask("Utilizando colección %s. Presione Ctrl+C para abortar\nEnter para continuar" % config['mongo']['collection'])
 
    if len(argv) <= 1:
       databaseName = u.ask("¿Que base de datos desea importar?")
@@ -145,22 +139,26 @@ def main(argv):
 
    else:
       for x in argv[1:]:
-         u.show("Cargando base de datos [%s]" % x, "warning")
+         u.show("Loading station [%s]" % x, "warning")
+         upl = uploader(x) # init class
 
          # Load the last execution time
-         with open('logs/' + x, 'r') as logfile:
-            lines = logfile.read().splitlines()
-            time = lines[-1].strip()
-            print("time" + time)
-            exit
+         logfile = 'logs/' + x
+         time = ''
+         if path.exists(logfile):
+            with open(logfile, 'r') as log:
+               lines = log.read().splitlines()
+               time = lines[-1].strip()
+               print("time" + time)
+               exit
 
-         upl = uploader(x)
-         try:
-            updatedDate = upl.loadSQL(time)
-            with open('logs/' + x ,'rw') as logfile:
-               logfile.write(updatedDate)
-         except:
-            u.show("Algun error ha ocurrido, parece ser normal", "error")
+         # try:
+         updatedDate = upl.loadSQL(time)
+
+         with open(logfile,'rw') as logfile:
+            logfile.write(updatedDate)
+         # except:
+            # u.show("Algun error ha ocurrido, parece ser normal", "error")
 
 if __name__ == "__main__":
-    main(sys.argv)
+   main(sys.argv)
